@@ -8,7 +8,7 @@ SRC = \
 src/main.c \
 src/parser.c \
 src/command.c \
-scr/filesystem.c
+src/filesystem.c
 
 OBJ = $(SRC:.c=.o)
 
