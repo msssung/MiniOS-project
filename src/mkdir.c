@@ -5,91 +5,91 @@
 #include <string.h>
 #include <pthread.h>
 
-// ìŠ¤ë ˆë“œì— ë„˜ê²¨ì¤„ ë°ì´í„°ë¥¼ ë‹´ëŠ” êµ¬ì¡°ì²´
+
+static pthread_mutex_t fs_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+// ½º·¹µå ÀÎÀÚ¿ë ±¸Á¶Ã¼
 typedef struct {
     char path[MAX_TOKEN_SIZE];
     int p_option;
 } MkdirArgs;
 
-// ê° ìŠ¤ë ˆë“œê°€ ë…ë¦½ì ìœ¼ë¡œ ì‹¤í–‰í•  ë””ë ‰í„°ë¦¬ ìƒì„± í•¨ìˆ˜
-void* thread_mkdir(void* arg) {
-    MkdirArgs* m_args = (MkdirArgs*)arg;
-
-    // ë™ì‹œì„± ì œì–´: íŠ¸ë¦¬ êµ¬ì¡° ë³€ê²½ ì‹œ ë®¤í…ìŠ¤ ë½ ì„¤ì •
+// ½º·¹µå°¡ °¢°¢ µ¹¸± Æú´õ »ı¼º ÇÔ¼ö
+void* thread_mkdir(void *arg) {
+    MkdirArgs *m_args = (MkdirArgs*)arg;
+    
+    // Æ®¸® ¸Ş¸ğ¸® ²¿ÀÓ ¹æÁö¿ë ¹ÂÅØ½º ¶ô
     pthread_mutex_lock(&fs_mutex);
-
-    TreeNode* current = get_current_directory();
-    TreeNode* existing = find_child(current, m_args->path);
-
+    
+    TreeNode *current = get_current_directory();
+    TreeNode *existing = find_child(current, m_args->path);
+    
     if (existing) {
-        // -p ì˜µì…˜ì´ ì—†ì„ ë•Œë§Œ ì´ë¯¸ ì¡´ì¬í•œë‹¤ëŠ” ì—ëŸ¬ ë©”ì‹œì§€ ì¶œë ¥
+        // -p ¿É¼Ç ²¨Á®ÀÖÀ» ¶§¸¸ Áßº¹ ¿¡·¯ Ãâ·Â
         if (!m_args->p_option) {
-            printf("mkdir: '%s' ìƒì„± ì‹¤íŒ¨: ì´ë¯¸ ì¡´ì¬í•©ë‹ˆë‹¤.\n", m_args->path);
+            printf("mkdir: '%s' »ı¼º ½ÇÆĞ: ÀÌ¹Ì Á¸ÀçÇÕ´Ï´Ù.\n", m_args->path);
         }
-    }
-    else {
-        // osproject.hì— ì •ì˜ëœ TYPE_DIR ë§¤í¬ë¡œ('d') ì‚¬ìš©
-        TreeNode* new_dir = create_node(m_args->path, TYPE_DIR);
+    } else {
+        // ½ÇÁ¦ ³ëµå »ı¼º ¹× Ãß°¡
+        TreeNode *new_dir = create_node(m_args->path, TYPE_DIR);
         if (new_dir) {
             add_child(current, new_dir);
-            printf("mkdir: ë””ë ‰í„°ë¦¬ '%s' ìƒì„± ì™„ë£Œ (Thread ID: %ld)\n", m_args->path, pthread_self());
+            // ½Ã¿¬ ¶§ ½º·¹µå ¿©·¯°³ µµ´Â °Å º¸¿©ÁÖ·Á°í ID °°ÀÌ ÂïÀ½
+            printf("mkdir: µğ·ºÅÍ¸® '%s' »ı¼º ¿Ï·á (Thread ID: %ld)\n", m_args->path, pthread_self());
         }
     }
-
-    pthread_mutex_unlock(&fs_mutex); // ë½ í•´ì œ
-    free(arg);
+    
+    pthread_mutex_unlock(&fs_mutex); // ¶ô ÇØÁ¦
+    free(arg); // malloc ÇØÁ¦
     return NULL;
 }
 
-// command.cì—ì„œ í˜¸ì¶œë  ê³µí†µ API ê·œê²© í•¨ìˆ˜
+// ¸ŞÀÎ ½© ¸ÅÇÎ ÇÔ¼ö
 void cmd_mkdir(ParsedCommand* parsed) {
-    // ì¸ì ì „ì²´ ê°œìˆ˜ê°€ 1ê°œ ì´í•˜ë©´ í´ë”ëª…ì„ ì…ë ¥í•˜ì§€ ì•Šì€ ê²ƒ 
+    // ¿¹¿ÜÃ³¸®: ÀÎÀÚ ¾øÀ» ¶§
     if (parsed->argc <= 1) {
-        printf("mkdir: ë””ë ‰í„°ë¦¬ ì´ë¦„ì„ ì…ë ¥í•´ì£¼ì„¸ìš”.\n");
+        printf("mkdir: µğ·ºÅÍ¸® ÀÌ¸§À» ÀÔ·ÂÇØÁÖ¼¼¿ä.\n");
         return;
     }
 
     int p_option = 0;
-    int start_idx = 1; // ê¸°ë³¸ì ìœ¼ë¡œ argv[0]ì´ "mkdir"ì´ë¯€ë¡œ í´ë”ëª…ì€ argv[1]ë¶€í„° ì‹œì‘
+    int start_idx = 1; // argv[0]Àº ¸í·É¾î ÀÌ¸§ÀÌ¶ó 1¹ø ÀÎµ¦½ººÎÅÍ ½ÃÀÛ
 
-    // íŒ€ì¥ë‹˜ íŒŒì„œê°€ ë„£ì–´ì¤€ option í•„ë“œì— "-p"ê°€ ë“¤ì–´ê°€ ìˆëŠ”ì§€ í™•ì¸
+    // -p ¿É¼Ç ÆÄ½Ì Ã³¸®
     if (strcmp(parsed->option, "-p") == 0) {
         p_option = 1;
-        start_idx = 2; // "-p"ê°€ argv[1]ì— ë“¤ì–´ìˆìœ¼ë¯€ë¡œ, ì‹¤ì œ í´ë”ëª…ì€ argv[2]ë¶€í„° ì‹œì‘
-
-        // ë§Œì•½ "mkdir -p" ê¹Œì§€ë§Œ ì¹˜ê³  í´ë”ëª…ì„ ì•ˆ ì ì—ˆì„ ë•Œ ë°©ì–´ ì½”ë“œ
+        start_idx = 2; // -p°¡ argv[1]ÀÌ¶ó Æú´õ¸íÀº 2¹øºÎÅÍ
+        
         if (parsed->argc <= 2) {
-            printf("mkdir: -p ì˜µì…˜ ë’¤ì— ë””ë ‰í„°ë¦¬ ì´ë¦„ì„ ì…ë ¥í•´ì£¼ì„¸ìš”.\n");
+            printf("mkdir: -p ¿É¼Ç µÚ¿¡ µğ·ºÅÍ¸® ÀÌ¸§À» ÀÔ·ÂÇØÁÖ¼¼¿ä.\n");
             return;
         }
     }
 
-    // ì‹¤ì œ ìƒì„±í•´ì•¼ í•  í´ë”ì˜ ê°œìˆ˜ ê³„ì‚°
+    // Æú´õ °³¼ö¸¸Å­ ½º·¹µå ÇÒ´ç
     int num_dirs = parsed->argc - start_idx;
-    pthread_t* threads = (pthread_t*)malloc(sizeof(pthread_t) * num_dirs);
+    pthread_t *threads = (pthread_t*)malloc(sizeof(pthread_t) * num_dirs);
     int t_count = 0;
 
-    // ì‹¤ì œ í´ë”ëª…ì´ ì‹œì‘ë˜ëŠ” ì¸ë±ìŠ¤(start_idx)ë¶€í„° ëê¹Œì§€ ëŒë©´ì„œ ìŠ¤ë ˆë“œ ìƒì„±
+    // ÀÎÀÚ µ¹¸é¼­ ½º·¹µå »ı¼º
     for (int i = start_idx; i < parsed->argc; i++) {
-        MkdirArgs* m_args = (MkdirArgs*)malloc(sizeof(MkdirArgs));
+        MkdirArgs *m_args = (MkdirArgs*)malloc(sizeof(MkdirArgs));
         strncpy(m_args->path, parsed->argv[i], MAX_TOKEN_SIZE - 1);
         m_args->path[MAX_TOKEN_SIZE - 1] = '\0';
         m_args->p_option = p_option;
 
-        // í´ë” í•˜ë‚˜ë‹¹ ìŠ¤ë ˆë“œ í•˜ë‚˜ì”© ë§¤í•‘í•˜ì—¬ ë™ì‹œ ìƒì„± ìˆ˜í–‰
         if (pthread_create(&threads[t_count], NULL, thread_mkdir, (void*)m_args) != 0) {
-            perror("mkdir ìŠ¤ë ˆë“œ ìƒì„± ì‹¤íŒ¨");
+            perror("mkdir ½º·¹µå »ı¼º ½ÇÆĞ");
             free(m_args);
-        }
-        else {
+        } else {
             t_count++;
         }
     }
 
-    // ëª¨ë“  ìŠ¤ë ˆë“œê°€ ìƒì„±ì„ ì™„ë£Œí•  ë•Œê¹Œì§€ ëŒ€ê¸° 
+    // ÀÏ²Û ½º·¹µå ´Ù ³¡³¯ ¶§±îÁö ´ë±â
     for (int i = 0; i < t_count; i++) {
         pthread_join(threads[i], NULL);
     }
-
+    
     free(threads);
 }
