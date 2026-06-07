@@ -23,7 +23,7 @@ make
 
 ```bash
 make clean   # 빌드 결과물 제거
-make run     # 빌드 후 실행
+make         # 빌드 후 실행
 ```
 
 ## 사용 예시
@@ -95,7 +95,7 @@ MiniOS/
 
 ## 기술 스택
 
-- **언어**: C (C99)
+- **언어**: C 
 - **라이브러리**: pthread (POSIX Threads)
 - **플랫폼**: Ubuntu Server 22.04 LTS
 - **빌드**: GNU Make, GCC
