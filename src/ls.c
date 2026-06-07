@@ -28,7 +28,7 @@ void cmd_ls(ParsedCommand* parsed) {
         // ls -l 옵션일 때 (상세 출력)
         if (opt_l) {
             char type_char = (current_node->type == TYPE_DIR) ? 'd' : '-';
-            printf("%c\tperm:%d\t%s\n", type_char, current_node->permission, current_node->name);
+            printf("%c\tperm:%o\t%s\n", type_char, current_node->permission, current_node->name);
         } 
         // 기본 ls 일 때 (이름만 가로로 쭉 출력)
         else {

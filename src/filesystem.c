@@ -48,7 +48,7 @@ TreeNode* create_node(const char* name, char type) {
     node->name[MAX_TOKEN_SIZE - 1] = '\0';
 
     node->type = type;
-    node->permission = (type == TYPE_DIR) ? 755 : 644; // 디렉터리 755, 파일 644
+    node->permission = (type == TYPE_DIR) ? 0755 : 0644; // 디렉터리 755, 파일 644
 
     node->parent = NULL;
     node->child = NULL;
@@ -202,7 +202,7 @@ void print_current_path(void) {
 
 // ==========================================
 // 5. 영속성 (저장 및 불러오기)
-// ==========================================
+//메모리에만 존재하는 트리 구조를 하드디스크(filesystem.dat)에 저장하고, 프로그램 재시작 시 100% 동일한 구조로 복원해 내는 데이터 영속성 관리 계층입니다.// ==========================================
 static void save_node(FILE* fp, TreeNode* node, char* path) {
     if (node == NULL) return;
 
@@ -214,7 +214,7 @@ static void save_node(FILE* fp, TreeNode* node, char* path) {
     }
 
     // 포맷: 경로|타입|권한 (예: /dir1|d|755)
-    fprintf(fp, "%s|%c|%d\n", current_path, node->type, node->permission);
+    fprintf(fp, "%s|%c|%o\n", current_path, node->type, node->permission);
 
     TreeNode* child = node->child;
     while (child != NULL) {
@@ -284,7 +284,7 @@ int load_filesystem(void) {
         if (parent != NULL) {
             TreeNode* new_node = create_node(node_name, type_str[0]);
             if (new_node != NULL) {
-                new_node->permission = atoi(perm_str);
+                new_node->permission = (int)strtol(perm_str, NULL, 8);
                 add_child(parent, new_node);
             }
         }

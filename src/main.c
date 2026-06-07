@@ -5,7 +5,6 @@
 #include "parser.h"
 #include "command.h"
 #include "filesystem.h"
-#include "history.h"
 
 int main(void) {
     char input[MAX_INPUT_SIZE];
@@ -35,7 +34,6 @@ int main(void) {
         }
 
         parse_input(input, &parsed);
-	history_add(input);
         dispatch_command(&parsed);
     }
 

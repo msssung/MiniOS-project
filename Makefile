@@ -9,7 +9,7 @@ src/main.c \
 src/parser.c \
 src/command.c \
 src/filesystem.c \
-src/history.c \
+src/vstat.c \
 src/cd.c \
 src/ls.c \
 src/mkdir.c \

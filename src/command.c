@@ -2,7 +2,7 @@
 #include <string.h>
 #include "command.h"
 
-void cmd_history(ParsedCommand* parsed);
+void cmd_vstat(ParsedCommand* parsed);
 void cmd_ls(ParsedCommand* parsed);
 void cmd_cd(ParsedCommand* parsed);
 void cmd_mkdir(ParsedCommand* parsed);
@@ -16,7 +16,7 @@ void cmd_clear(ParsedCommand* parsed);
 void cmd_wc(ParsedCommand* parsed);
 
 void dispatch_command(ParsedCommand* parsed) {
-    if (strcmp(parsed->command, "history") == 0){ cmd_history(parsed); return; }
+    if (strcmp(parsed->command, "vstat") == 0)  { cmd_vstat(parsed); return; }
     if (strcmp(parsed->command, "ls") == 0)     { cmd_ls(parsed);    return; }
     if (strcmp(parsed->command, "cd") == 0)     { cmd_cd(parsed);    return; }
     if (strcmp(parsed->command, "mkdir") == 0)  { cmd_mkdir(parsed); return; }
